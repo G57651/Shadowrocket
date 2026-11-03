@@ -1,0 +1,143 @@
+<UserControl x:Class="Shadowrocket.Views.DataView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:Shadowrocket.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,14,16,16">
+        <StackPanel>
+
+            <!-- 速率区（/traffic 实时） -->
+            <Border Style="{StaticResource CardBorder}" Padding="20,16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontSize="{DynamicResource FontSizeBig}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="{DynamicResource FontMono}">
+                                <Run Text="↑ " Foreground="{DynamicResource ChartUpBrush}" /><Run Text="{Binding UploadSpeedText, Mode=OneWay, FallbackValue=0.0}" />
+                            </TextBlock>
+                            <TextBlock FontSize="{DynamicResource FontSizeBig}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="{DynamicResource FontMono}" Margin="26,0,0,0">
+                                <Run Text="↓ " Foreground="{DynamicResource ChartDownBrush}" /><Run Text="{Binding DownloadSpeedText, Mode=OneWay, FallbackValue=0.0}" />
+                            </TextBlock>
+                        </StackPanel>
+                    <ctrl:SpeedChart Height="96" Margin="0,12,0,0"
+                                     DownSeries="{Binding DownSeries, Mode=OneWay}"
+                                     UpSeries="{Binding UpSeries, Mode=OneWay}"
+                                     DownColor="{DynamicResource ColorChartDown}"
+                                     UpColor="{DynamicResource ColorChartUp}"
+                                     GridColor="{DynamicResource ColorChartGrid}"
+                                     TextColor="{DynamicResource ColorTextSecondary}" />
+                    <TextBlock Style="{StaticResource SubText}" Margin="0,10,0,0">
+                        <Run Text="本次会话累计：↑ " /><Run Text="{Binding SessionUpText, Mode=OneWay}" /><Run Text=" / ↓ " /><Run Text="{Binding SessionDownText, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- 活动连接（/connections 实时） -->
+            <Grid Margin="0,22,0,8">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="活动连接" Style="{StaticResource GroupHeaderText}" Margin="0,0,0,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding ConnectionCount, StringFormat={}{0} 个}" Style="{StaticResource SubText}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBox Width="150" Padding="6,3" FontSize="12" VerticalContentAlignment="Center"
+                             Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                             BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1"
+                             Text="{Binding ConnectionSearch, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                             ToolTip="按主机或进程过滤" />
+                    <Button Content="{Binding PauseText}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Command="{Binding PauseCommand}" />
+                    <Button Content="× 全部关闭" Style="{StaticResource GhostButton}" Margin="8,0,0,0"
+                            Foreground="{DynamicResource DangerBrush}" Command="{Binding CloseAllCommand}" />
+                </StackPanel>
+            </Grid>
+            <Border Style="{StaticResource CardBorder}" Padding="0,4">
+                <ListView ItemsSource="{Binding Connections}" BorderThickness="0" Background="Transparent"
+                          ItemContainerStyle="{StaticResource ListViewItemStyle}"
+                          FontSize="12" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="主机" Width="240" DisplayMemberBinding="{Binding Host}" />
+                            <GridViewColumn Header="进程" Width="120" DisplayMemberBinding="{Binding Process}" />
+                            <GridViewColumn Header="命中规则" Width="200" DisplayMemberBinding="{Binding Rule}" />
+                            <GridViewColumn Header="代理链" Width="180" DisplayMemberBinding="{Binding Chains}" />
+                            <GridViewColumn Header="↑" Width="90" DisplayMemberBinding="{Binding Upload}" />
+                            <GridViewColumn Header="↓" Width="90" DisplayMemberBinding="{Binding Download}" />
+                            <GridViewColumn Header="时长" Width="80" DisplayMemberBinding="{Binding Duration}" />
+                            <GridViewColumn Header="" Width="60">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="关闭" Style="{StaticResource GhostButton}" Padding="6,1"
+                                                Command="{Binding DataContext.CloseOneCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding Id}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Border>
+
+            <!-- 历史流量（本地持久化，今日/本周/本月） -->
+            <TextBlock Text="历史流量" Style="{StaticResource GroupHeaderText}" Margin="0,22,0,8" />
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                <StackPanel>
+                    <Grid Height="40" Margin="16,0">
+                        <TextBlock Text="今日" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding TodayUpText}" Style="{StaticResource SubText}" />
+                            <TextBlock Text=" / " Style="{StaticResource SubText}" />
+                            <TextBlock Text="{Binding TodayDownText}" Style="{StaticResource SubText}" />
+                        </StackPanel>
+                    </Grid>
+                    <Border Height="1" Background="{DynamicResource SeparatorBrush}" Margin="16,0" />
+                    <Grid Height="40" Margin="16,0">
+                        <TextBlock Text="近 7 天" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding WeekUpText}" Style="{StaticResource SubText}" />
+                            <TextBlock Text=" / " Style="{StaticResource SubText}" />
+                            <TextBlock Text="{Binding WeekDownText}" Style="{StaticResource SubText}" />
+                        </StackPanel>
+                    </Grid>
+                    <Border Height="1" Background="{DynamicResource SeparatorBrush}" Margin="16,0" />
+                    <Grid Height="40" Margin="16,0">
+                        <TextBlock Text="本月" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding MonthUpText}" Style="{StaticResource SubText}" />
+                            <TextBlock Text=" / " Style="{StaticResource SubText}" />
+                            <TextBlock Text="{Binding MonthDownText}" Style="{StaticResource SubText}" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="仅统计软件记录期间的流量" Style="{StaticResource SubText}" Margin="16,0,16,12" />
+                </StackPanel>
+            </Border>
+
+            <!-- 内核日志（/logs 实时） -->
+            <Grid Margin="0,22,0,8">
+                <TextBlock Text="内核日志" Style="{StaticResource GroupHeaderText}" VerticalAlignment="Center" Margin="0" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBox Width="130" Padding="6,3" FontSize="12" VerticalContentAlignment="Center"
+                             Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                             BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                             ToolTip="按关键字过滤日志" />
+                    <Button Content="{Binding LevelWarningLabel}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Command="{Binding SetLevelCommand}" CommandParameter="warning" />
+                    <Button Content="{Binding LevelErrorLabel}" Style="{StaticResource GhostButton}" Margin="6,0,0,0" Command="{Binding SetLevelCommand}" CommandParameter="error" />
+                    <Button Content="{Binding LevelAllLabel}" Style="{StaticResource GhostButton}" Margin="6,0,0,0" Command="{Binding SetLevelCommand}" CommandParameter="全部" />
+                    <Button Content="清空" Style="{StaticResource GhostButton}" Margin="6,0,0,0" Command="{Binding ClearLogsCommand}" />
+                </StackPanel>
+            </Grid>
+            <Border Style="{StaticResource CardBorder}" Padding="12" Height="240">
+                <ListBox ItemsSource="{Binding Logs}" BorderThickness="0" Background="Transparent"
+                         FontFamily="{DynamicResource FontMono}" FontSize="11.5"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock TextWrapping="NoWrap" Foreground="{DynamicResource TextPrimaryBrush}">
+                                <Run Text="{Binding Time, Mode=OneWay}" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Run Text="{Binding Level, Mode=OneWay}" Foreground="{DynamicResource AccentBrush}" />
+                                <Run Text="{Binding Payload, Mode=OneWay}" />
+                            </TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

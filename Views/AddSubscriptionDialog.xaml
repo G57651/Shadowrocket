@@ -1,0 +1,44 @@
+<Window x:Class="Shadowrocket.Views.AddSubscriptionDialog" Icon="pack://application:,,,/app.ico"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="添加订阅" Width="520" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{DynamicResource PageBgBrush}"
+        FontFamily="{DynamicResource FontDefault}">
+    <StackPanel Margin="20">
+        <TextBlock Text="订阅名称（可选）" Style="{StaticResource SubText}" />
+        <TextBox x:Name="NameBox" Margin="0,6,0,14" Padding="8,7" FontSize="14"
+                 Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                 BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1" />
+
+        <TextBlock Text="订阅链接" Style="{StaticResource SubText}" />
+        <Grid Margin="0,6,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="UrlBox" Padding="8,7" FontSize="13"
+                     Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1" />
+            <Button Grid.Column="1" Content="从剪贴板" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Click="FromClipboard_Click" />
+            <Button Grid.Column="2" Content="本地文件" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Click="FromFile_Click" />
+        </Grid>
+
+        <TextBox x:Name="FilePathBox" Visibility="Collapsed" IsReadOnly="True" Margin="0,0,0,10" Padding="8,6"
+                 Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextSecondaryBrush}"
+                 BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1" FontSize="12"
+                 x:FieldModifier="public" />
+        <Border x:Name="FilePanel" Visibility="Collapsed" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="StatusText" Foreground="{DynamicResource DangerBrush}" VerticalAlignment="Center"
+                       TextWrapping="Wrap" FontSize="12" />
+            <Button x:Name="ImportButton" Grid.Column="1" Content="导入" Style="{StaticResource PrimaryButton}" Click="Import_Click" />
+        </Grid>
+    </StackPanel>
+</Window>

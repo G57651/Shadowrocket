@@ -1,0 +1,328 @@
+<UserControl x:Class="Shadowrocket.Views.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:Shadowrocket.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,14,16,16">
+        <StackPanel>
+
+            <!-- 内核未安装提示 -->
+            <Border Style="{StaticResource CardBorder}" Padding="20,16"
+                    Background="{DynamicResource CardBrush}" Margin="0,0,0,16"
+                    Visibility="{Binding IsCoreInstalled, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock Text="内核未安装" FontSize="{DynamicResource FontSizeBody}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Style="{StaticResource SubText}" Margin="0,4,0,0" Text="{Binding KernelMissingHint, Mode=OneWay}" />
+                    </StackPanel>
+                    <Button Content="去下载 →" Style="{StaticResource GhostButton}" HorizontalAlignment="Right"
+                            Click="GoSettings_Click" />
+                </Grid>
+            </Border>
+
+            <!-- ===================== 大状态卡 ===================== -->
+            <Border Style="{StaticResource CardBorder}" Padding="20,18,20,0">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding StatusTitle}"
+                                           FontSize="{DynamicResource FontSizePageTitle}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Border Style="{StaticResource BadgeBorder}" Margin="10,0,0,0"
+                                        Background="{Binding IsRunning, Converter={StaticResource RunningBadgeConverter}}">
+                                    <TextBlock Style="{StaticResource BadgeText}" Foreground="{DynamicResource WhiteBrush}"
+                                               Text="{Binding IsRunning, Converter={StaticResource RunningTextConverter}}" />
+                                </Border>
+                            </StackPanel>
+
+                            <TextBlock Style="{StaticResource SubText}" Margin="0,6,0,0"
+                                       Text="{Binding StatusSubtitleText, Mode=OneWay}" />
+
+                            <!-- 三态主开关：真实切换（重启内核 / 设置系统代理） -->
+                            <Border Background="{DynamicResource SegmentTrackBrush}"
+                                    CornerRadius="20" Height="40" Margin="0,14,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <RadioButton Grid.Column="0" Style="{StaticResource SegmentItem}" GroupName="mode" Content="TUN 模式"
+                                                 IsChecked="{Binding Mode, Converter={StaticResource EnumEqualConverter}, ConverterParameter=Tun, Mode=OneWay}"
+                                                 Command="{Binding SetModeCommand}" CommandParameter="Tun" />
+                                    <RadioButton Grid.Column="1" Style="{StaticResource SegmentItem}" GroupName="mode" Content="系统代理"
+                                                 IsChecked="{Binding Mode, Converter={StaticResource EnumEqualConverter}, ConverterParameter=SystemProxy, Mode=OneWay}"
+                                                 Command="{Binding SetModeCommand}" CommandParameter="SystemProxy" />
+                                    <RadioButton Grid.Column="2" Style="{StaticResource SegmentItem}" GroupName="mode" Content="关闭"
+                                                 IsChecked="{Binding Mode, Converter={StaticResource EnumEqualConverter}, ConverterParameter=Off, Mode=OneWay}"
+                                                 Command="{Binding SetModeCommand}" CommandParameter="Off" />
+                                </Grid>
+                            </Border>
+
+                            <!-- 大号速率：/traffic 实时（数值自带自适应单位，大小写可在设置里切换） -->
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,14">
+                                <TextBlock FontSize="{DynamicResource FontSizeBig}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontFamily="{DynamicResource FontMono}">
+                                    <Run Text="↑ " Foreground="{DynamicResource ChartUpBrush}" /><Run Text="{Binding UploadSpeedText, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock FontSize="{DynamicResource FontSizeBig}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontFamily="{DynamicResource FontMono}" Margin="26,0,0,0">
+                                    <Run Text="↓ " Foreground="{DynamicResource ChartDownBrush}" /><Run Text="{Binding DownloadSpeedText, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 右：实时速率曲线 -->
+                        <StackPanel Grid.Column="1" Margin="24,0,0,0">
+                            <TextBlock Text="{Binding ChartWindowText, Mode=OneWay}" Style="{StaticResource SubText}" HorizontalAlignment="Right" Margin="0,0,0,6" />
+                            <ctrl:SpeedChart Width="340" Height="96"
+                                             DownSeries="{Binding DownSeries, Mode=OneWay}"
+                                             UpSeries="{Binding UpSeries, Mode=OneWay}"
+                                             DownColor="{DynamicResource ColorChartDown}"
+                                             UpColor="{DynamicResource ColorChartUp}"
+                                             GridColor="{DynamicResource ColorChartGrid}"
+                                             TextColor="{DynamicResource ColorTextSecondary}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 当前节点行 -->
+                    <Border Height="1" Background="{DynamicResource SeparatorBrush}" Margin="-20,0" />
+                    <Grid Height="52">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Style="{StaticResource BadgeBorder}" Background="{DynamicResource AccentSoftBrush}">
+                                <TextBlock Style="{StaticResource BadgeText}" Text="{Binding CurrentNodeBadgeText}" Foreground="{DynamicResource AccentBrush}" />
+                            </Border>
+                            <ctrl:FlagBadge Margin="10,0,0,0" VerticalAlignment="Center"
+                                            Visibility="{Binding CurrentNodeFlagCode, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                                            Fill="{Binding CurrentNodeFlagBrush, Mode=OneWay}"
+                                            Code="{Binding CurrentNodeFlagCode, Mode=OneWay}" />
+                            <TextBlock Text="{Binding CurrentNodeName}" Margin="10,0,0,0"
+                                       FontSize="{DynamicResource FontSizeBody}" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource ProtoPill}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                    Visibility="{Binding CurrentNodeProtoText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}">
+                                <TextBlock Style="{StaticResource ProtoPillText}" Text="{Binding CurrentNodeProtoText}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding CurrentNodeLatencyText}"
+                                   FontFamily="{DynamicResource FontMono}" FontSize="{DynamicResource FontSizeSecondary}"
+                                   FontWeight="Medium" VerticalAlignment="Center">
+                            <TextBlock.Foreground>
+                                <Binding Path="CurrentNodeLatencyColorText" Mode="OneWay" />
+                            </TextBlock.Foreground>
+                        </TextBlock>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ===================== 快捷行卡 ===================== -->
+            <Border Style="{StaticResource CardBorder}" Margin="0,22,0,0" Visibility="{Binding HasSubscription, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel>
+                    <!-- 全局路由：规则/全局/直连，真实 PATCH /configs -->
+                    <Button Height="44" Cursor="Hand" HorizontalContentAlignment="Stretch"
+                            Background="Transparent" BorderThickness="0" Padding="0"
+                            Click="RouteButton_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid Margin="16,0" Background="Transparent">
+                                    <TextBlock Text="全局路由" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding RouteModeText}" FontSize="{DynamicResource FontSizeRowValue}" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="›" FontSize="16" Foreground="{DynamicResource TextTertiaryBrush}" Margin="10,0,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="RouteMenu">
+                                <MenuItem Header="规则模式" Command="{Binding SetRouteCommand}" CommandParameter="rule" />
+                                <MenuItem Header="全局模式" Command="{Binding SetRouteCommand}" CommandParameter="global" />
+                                <MenuItem Header="直连模式" Command="{Binding SetRouteCommand}" CommandParameter="direct" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Border Height="1" Background="{DynamicResource SeparatorBrush}" Margin="56,0,0,0" />
+                    <!-- 连通性测试：经 PROXY 组真实测延迟 -->
+                    <Button Background="Transparent" BorderThickness="0" Cursor="Hand" HorizontalContentAlignment="Stretch" Padding="0" Height="44"
+                            Command="{Binding TestConnectivityCommand}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid Margin="16,0" Background="Transparent">
+                                    <TextBlock Text="当前节点延迟" ToolTip="点击测当前选中节点经代理的延迟" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                                            <Ellipse.Fill>
+                                                <Binding Path="ConnectivityColorText" Mode="OneWay" Converter="{StaticResource StringToBrushConverter}" />
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding ConnectivityText}" FontSize="{DynamicResource FontSizeRowValue}" Margin="6,0,0,0">
+                                            <TextBlock.Foreground>
+                                                <Binding Path="ConnectivityColorText" Mode="OneWay" Converter="{StaticResource StringToBrushConverter}" />
+                                            </TextBlock.Foreground>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Border Height="1" Background="{DynamicResource SeparatorBrush}" Margin="56,0,0,0" />
+                    <!-- 当前订阅流量（真实 subscription-userinfo） -->
+                    <StackPanel Margin="16,10,16,12">
+                        <Grid>
+                            <TextBlock Text="{Binding SubscriptionName}" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding SubscriptionUsageText}" FontSize="{DynamicResource FontSizeRowValue}"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Border Height="4" CornerRadius="2" Background="{DynamicResource SeparatorBrush}" Margin="0,8,0,0"
+                                Visibility="{Binding HasSubscription, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{Binding SubscriptionPercent, Converter={StaticResource PercentToGridLengthConverter}}" />
+                                    <ColumnDefinition Width="{Binding SubscriptionRemainder, Converter={StaticResource PercentToGridLengthConverter}}" />
+                                </Grid.ColumnDefinitions>
+                                <Border Background="{DynamicResource AccentBrush}" CornerRadius="2" />
+                            </Grid>
+                        </Border>
+                        <TextBlock Text="{Binding SubscriptionExpireText}" Style="{StaticResource SubText}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ===================== 节点区 ===================== -->
+            <Grid Margin="0,22,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox ItemsSource="{Binding ProviderNames}" SelectedItem="{Binding SelectedProvider, Mode=TwoWay}"
+                              AutomationProperties.Name="订阅筛选"
+                              FontSize="12" Padding="8,4" MinWidth="130" VerticalContentAlignment="Center"
+                              Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource SeparatorBrush}" />
+                    <Button Content="{Binding TestAllButtonText, Mode=OneWay}" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Command="{Binding TestAllCommand}"
+                            ToolTip="对全部节点测下载速度（每个节点约 3.5 秒）" />
+                    <Button Content="⟲ 刷新" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Command="{Binding RefreshCommand}" />
+                    <TextBlock Text="栏数" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="14,0,0,0" />
+                    <ComboBox ItemsSource="{Binding ColumnChoices}" SelectedItem="{Binding NodeColumnsSelected, Mode=TwoWay}"
+                              AutomationProperties.Name="节点列数"
+                              Width="58" FontSize="12" Padding="8,4" VerticalContentAlignment="Center" Margin="6,0,0,0"
+                              Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource SeparatorBrush}"
+                              ToolTip="每行显示的节点列数" />
+                </StackPanel>
+                    <Button Grid.Column="1" Content="+ 添加订阅" Style="{StaticResource GhostButton}" Command="{Binding AddSubscriptionCommand}" />
+                </Grid>
+                <!-- 测速进度 / 结果提示 -->
+                <TextBlock Text="{Binding SpeedTestHint, Mode=OneWay}" FontSize="12"
+                           Foreground="{DynamicResource AccentBrush}" Margin="0,10,0,0"
+                           Visibility="{Binding SpeedTestHint, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
+
+            <!-- 节点双列网格（真实：来自 proxy-providers） -->
+            <ItemsControl ItemsSource="{Binding Nodes}" Margin="0,12,0,0"
+                          Visibility="{Binding HasSubscription, Converter={StaticResource BoolToVisibilityConverter}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="{Binding NodeColumns, Mode=OneWay}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- 用 Button 承载点击：MouseBinding 只认鼠标事件，键盘与读屏用户点不动 -->
+                        <Button Margin="0,0,12,12" Padding="0" Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" HorizontalContentAlignment="Stretch"
+                                AutomationProperties.Name="{Binding Name, StringFormat=节点 {0}}"
+                                Command="{Binding Owner.SelectNodeCommand}"
+                                CommandParameter="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter />
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="选择此节点" Command="{Binding Owner.SelectNodeCommand}" CommandParameter="{Binding}" />
+                                    <MenuItem Header="测速" Command="{Binding Owner.TestNodeCommand}" CommandParameter="{Binding}" />
+                                    <MenuItem Header="复制节点名" Command="{Binding Owner.CopyNodeCommand}" CommandParameter="{Binding}" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                            <Border Padding="14,10" Cursor="Hand"
+                                    Background="{DynamicResource CardBrush}"
+                                    CornerRadius="{DynamicResource RadiusNodeCard}"
+                                    BorderThickness="1.5"
+                                    BorderBrush="{Binding IsCurrent, Converter={StaticResource CurrentNodeBorderConverter}}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ctrl:FlagBadge VerticalAlignment="Center"
+                                                    Visibility="{Binding FlagCode, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                                                    Fill="{Binding FlagBrush, Mode=OneWay}"
+                                                    Code="{Binding FlagCode, Mode=OneWay}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="10,0,0,0"
+                                               FontSize="{DynamicResource FontSizeBody}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Name}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding MetricText, Mode=OneWay}" Margin="10,0,0,0"
+                                               FontFamily="{DynamicResource FontMono}" FontSize="{DynamicResource FontSizeSecondary}"
+                                               FontWeight="Medium" VerticalAlignment="Center" ToolTip="{Binding MetricText, Mode=OneWay}">
+                                        <TextBlock.Foreground>
+                                            <Binding Path="MetricColorText" Mode="OneWay" />
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Margin="36,7,0,0">
+                                    <Border Style="{StaticResource ProtoPill}">
+                                        <TextBlock Style="{StaticResource ProtoPillText}" Text="{Binding TypeName}" />
+                                    </Border>
+                                    <Border Style="{StaticResource ProtoPill}">
+                                        <TextBlock Style="{StaticResource ProtoPillText}">
+                                            <Run Text="{Binding ProviderName, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </Border>
+                                    <Border Style="{StaticResource ProtoPill}" Visibility="{Binding Udp, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <TextBlock Style="{StaticResource ProtoPillText}" Text="UDP" />
+                                    </Border>
+                                    <Border Style="{StaticResource ProtoPill}" Background="{DynamicResource AccentSoftBrush}"
+                                            Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <TextBlock Style="{StaticResource ProtoPillText}" Text="当前" Foreground="{DynamicResource AccentBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                            </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- 空状态：没有任何订阅 -->
+            <Border Style="{StaticResource CardBorder}" Padding="40,48" Margin="0,16,0,0"
+                    Visibility="{Binding HasSubscription, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="还没有订阅" FontSize="{DynamicResource FontSizePageTitle}" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding EmptyStateText, Mode=OneWay}"
+                               Style="{StaticResource SubText}" HorizontalAlignment="Center" Margin="0,8,0,0" TextAlignment="Center" />
+                    <Button Content="添加订阅" Style="{StaticResource PrimaryButton}" Margin="0,20,0,0"
+                            HorizontalAlignment="Center" Command="{Binding AddSubscriptionCommand}" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
